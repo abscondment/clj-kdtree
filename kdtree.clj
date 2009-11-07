@@ -21,9 +21,42 @@
                  :r (build-tree (subvec points (inc median)) (inc depth))))))))
 
 (comment
-  ;; TODO
-  (defn nearest-neighbor))
-  
+  ;;; This doesn't actually work, but I can't think straight and need to go home.
+(defn- distance-between [a b]
+  (reduce + (map #(let [n (apply - %)] (* n n))
+                 (partition 2 (interleave a b)))))
+
+(defn nearest-neighbor
+  ([tree point] (nearest-neighbor tree point 0 '()))
+  ([tree point depth path]
+     (cond (nil? tree) path
+           (not (map? tree))
+           (take 3
+                 (sort-by :dist (cons {:node tree :dist (distance-between tree point)} path)))
+           ;;; Otherwise...
+           true
+           (let [dimension (mod depth (count point))
+                 dir (if (> (nth (:v tree) dimension)
+                            (nth point dimension)) :r :l)
+                 odir (if (= :r dir) :l :r)
+                 best (take 3 (nearest-neighbor
+                               (dir tree)
+                               point
+                               (inc depth)
+                               (sort-by
+                                :dist
+                                (cons {:node (:v tree)
+                                       :dist (distance-between (:v tree) point)}
+                                      path))))]
+                 best))))
+                 
+                                            
+
+(def tree (build-tree [[1 11] [2 5] [4 8] [6 4] [5 0] [7 9] [8 2]]))
+
+(println tree)
+(println (nearest-neighbor tree [3 9]))
+)
 
 ;;; TESTS
 
@@ -78,5 +111,4 @@
                 :l [8 5 4]
                 :r [6 8 7]}}))))
 
-(run-tests)
-
+;(run-tests)
