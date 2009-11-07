@@ -20,43 +20,71 @@
                  :l (build-tree (subvec points 0 median) (inc depth))
                  :r (build-tree (subvec points (inc median)) (inc depth))))))))
 
-(comment
   ;;; This doesn't actually work, but I can't think straight and need to go home.
 (defn- distance-between [a b]
   (reduce + (map #(let [n (apply - %)] (* n n))
                  (partition 2 (interleave a b)))))
 
 (defn nearest-neighbor
-  ([tree point] (nearest-neighbor tree point 0 '()))
-  ([tree point depth path]
-     (cond (nil? tree) path
-           (not (map? tree))
-           (take 3
-                 (sort-by :dist (cons {:node tree :dist (distance-between tree point)} path)))
-           ;;; Otherwise...
-           true
-           (let [dimension (mod depth (count point))
-                 dir (if (> (nth (:v tree) dimension)
-                            (nth point dimension)) :r :l)
-                 odir (if (= :r dir) :l :r)
-                 best (take 3 (nearest-neighbor
-                               (dir tree)
-                               point
-                               (inc depth)
-                               (sort-by
-                                :dist
+  ([tree point] (nearest-neighbor tree point 0 1 '()))
+  ([tree point n] (nearest-neighbor tree point 0 n '()))
+  ([tree point depth n best]
+     (take n
+      (sort-by :dist
+       (cond
+        ;;; Empty tree? The best list remains the same.
+        (nil? tree) best
+
+        ;;; Not a map? We hit an edge - try to stick it on the best list.
+        (not (map? tree))
+        (cons {:node tree :dist (distance-between tree point)} best)
+      
+        ;;; Otherwise, recurse!
+        true
+        (let [dimension (mod depth (count point))
+              dim-dist (- (nth point dimension) (nth (:v tree) dimension))
+              search-order (if (> dim-dist 0) '(:r :l) '(:l :r))
+
+              ;;; Compute a best list for the near-side of the search order
+              best-near
+              (nearest-neighbor ((first search-order) tree)
+                                point
+                                (inc depth)
+                                n
                                 (cons {:node (:v tree)
                                        :dist (distance-between (:v tree) point)}
-                                      path))))]
-                 best))))
-                 
-                                            
+                                      best))]
 
+          ;;; If the square distance of our search node to point in the current dimension
+          ;;; is still better than the *worst* of the near-side best list, there may be a
+          ;;; better solution on the far side. Compute it, and remove duplicates.
+          (if (< (* dim-dist dim-dist) (:dist (last best-near)))
+            (distinct
+             (nearest-neighbor ((last search-order) tree)
+                               point
+                               (inc depth)
+                               n
+                               (cons {:node (:v tree)
+                                      :dist (distance-between (:v tree) point)}
+                                     best-near)))
+            best-near)))))))
+
+(comment
 (def tree (build-tree [[1 11] [2 5] [4 8] [6 4] [5 0] [7 9] [8 2]]))
 
 (println tree)
 (println (nearest-neighbor tree [3 9]))
+(println (nearest-neighbor tree [3 9] 8))
 )
+
+(defn- random-points []
+     (cons (vec (list (rand 1000) (rand 1000)))
+           (lazy-seq
+             (cons (vec (list (rand 1000) (rand 1000)))
+                   (random-points)))))
+
+(time
+ (def tree (build-tree (take 100000 (random-points)))))
 
 ;;; TESTS
 
