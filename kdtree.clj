@@ -182,7 +182,8 @@
     (is (= (drop 4 (map :node (nearest-neighbor tree [2 2] (count points))))
            (drop 4 (sort points))))))
 
-;;; Which cities are closest to Seattle?
+;;; Some real-world location comparisons.
+;;; http://maps.google.com/maps?q=47.6203+-122.34932
 (deftest Neighbors-2d-Seattle
   (let [cities { [47.6203   -122.34932]  :seattle
                  [37.810054 -122.477876] :san-francisco
