@@ -1,7 +1,6 @@
 (ns clojure.lang.kdtree)
 
-(use 'clojure.test)
-
+;;; TODO: replace this with the "standard" Lisp tree (value left right)?
 (defstruct node :v :l :r)
 
 (defn build-tree
@@ -23,10 +22,11 @@
                                 (inc depth))))))))
 
 
-;;; There is probably a faster way to compute k-dimensional distance
+;;; Compute k-dimensional distance
 (defn- dist-squared [a b]
-  (reduce + (map #(let [n (apply - %)] (* n n))
-                 (partition 2 (interleave a b)))))
+  (reduce + (for [i (range (count a))]
+              (let [v (- (nth a i) (nth b i))]
+                (* v v)))))
 
 (defn nearest-neighbor
   ([tree point] (first (nearest-neighbor tree point 1 0 nil)))
@@ -73,9 +73,27 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TESTS
+(use 'clojure.test)
 
+;;; Test kD distance-squared function
+(deftest- Distance-Squared
+  (is (= (dist-squared [0 0] [1 1]) 2))
+  (is (= (dist-squared [Math/PI -1.0] [1.0 Math/PI])
+         (+ (Math/pow (- Math/PI 1) 2) (Math/pow (inc Math/PI) 2))))
+  (is (= (dist-squared [1 1 1 1 1] [2 2 2 2 2]) 5))
+  (is (= (dist-squared [0   1   2   3   4   5   6   7   8   9]
+                       [1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0])
+         (+ (* 1.1 1.1)
+            (* 0.2 0.2)
+            (* 0.7 0.7)
+            (* 1.6 1.6)
+            (* 2.5 2.5)
+            (* 3.4 3.4)
+            (* 4.3 4.3)
+            (* 5.2 5.2)
+            (* 6.1 6.1)
+            (* 7.0 7.0)))))
 
-;;; TREE CREATION
 
 ;;; 2d-tree example found at: http://en.wikipedia.org/wiki/Kd-tree
 (deftest- Build-2d-Example-Wikipedia
@@ -89,7 +107,7 @@
                 :l [8,1]
                 :r nil}}))))
 
-;;; Naïve 3d-tree
+;;; Simple 3d-tree
 (deftest- Build-3d-Example-A
   (let [tree (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
                           [4 4 4] [1 1 1] [3 3 3] [8 8 8]])]
@@ -104,7 +122,7 @@
                 :l [6 6 6]
                 :r [8 8 8]}}))))
 
-;;; Variation on naïve 3d-tree
+;;; Variation on simple 3d-tree
 (deftest- Build-3d-Example-B
   (let [tree (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
                           [4 4 4] [1 1 1] [3 3 3]])]
@@ -133,7 +151,15 @@
                 :r [6 8 7]}}))))
 
 
-;;; NEAREST-NEIGHBOR SEARCH
+;;; Test that search results match the naïve sort-by-distance algorithm.
+(deftest- Neighbors-Sorting-Example
+  (let [points (for [x (range 2 50)
+                     y (range 2 50)]
+                 [(* 0.95 x) (* -1.23 y)])
+        cpoint [Math/PI Math/E]
+        tree (build-tree points)]
+    (is (= (take 5 (sort-by #(dist-squared cpoint %) points))
+           (map :node (nearest-neighbor tree cpoint 5))))))
 
 ;;; Simple example based on the search animation from:
 ;;; http://en.wikipedia.org/wiki/Kd-tree
@@ -142,7 +168,7 @@
     (is (= (nearest-neighbor tree [3 9])
            {:node [4 8] :dist-squared 2}))))
 
-;;; A naïve 2d example.
+;;; A simple 2d example.
 (deftest- Neighbors-2d-Example
   (let [points [[8 8] [3 1] [1 1] [6 6] [7 7] [3 3] [1 3] [4 4] [5 5]]
         tree (build-tree points)]
@@ -184,5 +210,4 @@
     (is (= (first points)
            (:node (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
 
-
-;(run-tests)
+(run-tests)
