@@ -30,12 +30,12 @@
   ([tree point] (first (nearest-neighbor tree point 1 0 nil)))
   ([tree point n] (nearest-neighbor tree point n 0 nil))
   ([tree point n depth best]
-     (take n
-      (sort-by :dist-squared
-       (if ;;; Empty tree? The best list is unchanged.
-           (nil? tree) best
+     (if ;;; Empty tree? The best list is unchanged.
+         (nil? tree) best
 
-           ;;; Otherwise, recurse!
+         ;;; Otherwise, recurse!
+         (take n
+          (sort-by :dist-squared
            (let [dimension (mod depth (count point))
                  dim-dist (- (nth point dimension) (nth (node-value tree) dimension))
                  search-order (if (> dim-dist 0)
@@ -188,4 +188,4 @@
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
 
-;(run-tests)
+;(time (run-tests))
