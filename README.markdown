@@ -10,13 +10,13 @@ For more detail, refer to [Wikipedia on Kd-trees](http://en.wikipedia.org/wiki/K
 
 ## Usage
 
-   ;;; Use a kdtree to find neighbors for one point given a set of points.
-   (let [points [[8 8] [3 1] [6 6] [7 7] [1 3] [4 4] [5 5]]
-         tree (build-tree points)
-         neighbors (nearest-neighbor tree [2 2] 4)]
-         (println "Tree:" tree
-                  "\n\nFour points closest to [2 2]:\n"
-                  neighbors))
+    ;;; Use a kdtree to find neighbors for one point given a set of points.
+    (let [points [[8 8] [3 1] [6 6] [7 7] [1 3] [4 4] [5 5]]
+          tree (build-tree points)
+          neighbors (nearest-neighbor tree [2 2] 4)]
+          (println "Tree:" tree
+                   "\n\nFour points closest to [2 2]:\n"
+                   neighbors))
 
 ## License
 
