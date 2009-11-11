@@ -1,7 +1,10 @@
+;;; Copyright (C) 2009 Brendan Ribera. All rights reserved.
+;;; Distributed under the MIT License; see the file LICENSE
+;;; at the root of this distribution.
 (ns clojure.lang.kdtree)
 
-;;; Compute k-dimensional distance
 (defn- dist-squared [a b]
+  "Compute the K-dimensional distance between two points"
   (reduce + (for [i (range (count a))]
               (let [v (- (nth a i) (nth b i))]
                 (* v v)))))
@@ -12,7 +15,9 @@
 (defn- node-right [n] (first (rest (rest n))))
 
 (defn build-tree
-  ([points] (build-tree points 0))
+  "Construct a Kd-tree from points. Assumes all points are of the same dimension."
+  ([points]
+     (build-tree points 0))
   ([points depth]
      (let [point-count (count points)]
        (if (= 0 point-count) nil
@@ -27,6 +32,7 @@
                (list (nth points median))))))))
 
 (defn nearest-neighbor
+  "Compute n nearest neighbors for a point. If n is omitted, the result is the nearest neighbor; otherwise, the result is a list of length n."
   ([tree point] (first (nearest-neighbor tree point 1 0 nil)))
   ([tree point n] (nearest-neighbor tree point n 0 nil))
   ([tree point n depth best]
@@ -193,4 +199,4 @@
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
 
-;(time (run-tests))
+(time (run-tests))
