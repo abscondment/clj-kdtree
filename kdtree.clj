@@ -48,16 +48,16 @@
                                    point
                                    n
                                    (inc depth)
-                                   (cons {:point
-                                          (node-value tree)
-                                          :dist-squared
-                                          (dist-squared (node-value tree) point)}
+                                   (cons {:point (node-value tree)
+                                          :dist-squared (dist-squared
+                                                         (node-value tree)
+                                                         point)}
                                          best))]
              
-             ;;; If the square distance of our search node to point in the current
-             ;;; dimension is still better than the *worst* of the near-side best
-             ;;; list, there may be a better solution on the far side. Compute &
-             ;;; combine with near-side solutions.
+             ;;; If the square distance of our search node to point in the
+             ;;; current dimension is still better than the *worst* of the near-
+             ;;; side best list, there may be a better solution on the far
+             ;;; side. Compute & combine with near-side solutions.
              (if (< (* dim-dist dim-dist) (:dist-squared (last best-near)))
                (concat best-near
                        (nearest-neighbor
@@ -67,14 +67,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TESTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use 'clojure.test)
 
 ;;; Test kD distance-squared function
 (deftest- Distance-Squared
+  ;;; Simple 2-d point
   (is (= (dist-squared [0 0] [1 1]) 2))
+  ;;; 2-d using floating points
   (is (= (dist-squared [Math/PI -1.0] [1.0 Math/PI])
          (+ (Math/pow (- Math/PI 1) 2) (Math/pow (inc Math/PI) 2))))
+  ;;; Simple 5-d distance
   (is (= (dist-squared [1 1 1 1 1] [2 2 2 2 2]) 5))
+  ;;; 10-d, floating point distance
   (is (= (dist-squared [0   1   2   3   4   5   6   7   8   9]
                        [1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0])
          (+ (* 1.1 1.1)
