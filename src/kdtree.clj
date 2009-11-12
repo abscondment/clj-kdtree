@@ -1,7 +1,7 @@
 ;;; Copyright (C) 2009 Brendan Ribera. All rights reserved.
 ;;; Distributed under the MIT License; see the file LICENSE
 ;;; at the root of this distribution.
-(ns clojure.lang.kdtree)
+(ns kdtree)
 
 (defn- dist-squared [a b]
   "Compute the K-dimensional distance between two points"
@@ -198,5 +198,3 @@
         tree (build-tree points)]
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
-
-(time (run-tests))
