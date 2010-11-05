@@ -1,6 +1,6 @@
-(ns kdtree-tests
-  (:use clojure.test)
-  (:use kdtree))
+(ns kdtree.test
+  (:use [kdtree] :reload)
+  (:use [clojure.test]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TESTS
