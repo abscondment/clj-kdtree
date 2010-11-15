@@ -6,7 +6,7 @@
 TODOs for clj-kdtree
 
 * API changes
- * TODO node metadata? (unique id)
+** TODO node metadata? (unique id)
 ** TODO insert, remove
 ** TODO make helpers private
 * Implementation changes
