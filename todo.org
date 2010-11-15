@@ -1,0 +1,15 @@
+#-*- mode: org -*-
+#+startup: overview
+#+startup: hidestars
+#+TODO: TODO | INPROGRESS | DONE
+
+TODOs for clj-kdtree
+
+* API changes
+ * TODO node metadata? (unique id)
+** TODO insert, remove
+** TODO make helpers private
+* Implementation changes
+** TODO Store points as native arrays (verify: less memory, faster computation)
+** TODO Test different data structures for nodes. deftype? defrecord? hashmaps?
+   Stick with vecs? Focus on better memory usage rather than speed.
