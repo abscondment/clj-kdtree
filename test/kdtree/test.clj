@@ -1,9 +1,19 @@
 (ns kdtree.test
   (:use [kdtree] :reload)
+  (:import [kdtree Node Result])
   (:use [clojure.test]))
 
 ;; pull in private function
 (def dist-squared (ns-resolve 'kdtree 'dist-squared))
+
+(defn- legible-tree [t]
+  (if (not (nil? t))
+    (let [val (.value t)
+          left (.left t)
+          right (.right t)]
+      (if (or left right)
+        (list val (legible-tree left) (legible-tree right))
+        (list val)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TESTS
@@ -34,16 +44,19 @@
 
 ;;; 2d-tree example found at: http://en.wikipedia.org/wiki/Kd-tree
 (deftest- Build-2d-Example-Wikipedia
-  (let [tree (build-tree [[4 7] [2 3] [5 4] [9 6] [8 1] [7 2]])]
+  (let [tree (legible-tree
+              (build-tree [[4 7] [2 3] [5 4] [9 6] [8 1] [7 2]]))]
     (is (= tree
            '([7 2]
                ([5 4] ([2 3]) ([4 7]))
                ([9 6] ([8 1]) nil))))))
 
+
 ;;; Simple 3d-tree
 (deftest- Build-3d-Example-A
-  (let [tree (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
-                          [4 4 4] [1 1 1] [3 3 3] [8 8 8]])]
+  (let [tree (legible-tree
+              (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
+                           [4 4 4] [1 1 1] [3 3 3] [8 8 8]]))]
     (is (= tree
            '([5 5 5]
                ([3 3 3]
@@ -53,8 +66,9 @@
 
 ;;; Variation on simple 3d-tree
 (deftest- Build-3d-Example-B
-  (let [tree (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
-                          [4 4 4] [1 1 1] [3 3 3]])]
+  (let [tree (legible-tree
+              (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
+                           [4 4 4] [1 1 1] [3 3 3]]))]
     (is (= tree
            '([4 4 4]
                ([2 2 2] ([1 1 1]) ([3 3 3]))
@@ -62,15 +76,15 @@
 
 ;;; Slightly more complicated 3d-tree
 (deftest- Build-3d-Example-C
-  (let [tree (build-tree [[1 9 9] [2 3 1] [3 1 4] [4 7 6]
-                          [5 2 3] [6 8 7] [7 6 5] [8 5 4]])]
+  (let [tree (legible-tree
+              (build-tree [[1 9 9] [2 3 1] [3 1 4] [4 7 6]
+                           [5 2 3] [6 8 7] [7 6 5] [8 5 4]]))]
     (is (= tree
            '([5 2 3]
                ([4 7 6]
                   ([3 1 4] ([2 3 1]) nil)
                   ([1 9 9]))
                ([7 6 5] ([8 5 4]) ([6 8 7])))))))
-
 
 ;;; Test that search results match the naïve sort-by-distance algorithm.
 (deftest- Neighbors-Sorting-Example
@@ -87,7 +101,7 @@
 (deftest- Neighbors-2d-Example-Wikipedia
   (let [tree (build-tree [[1 11] [2 5] [4 8] [6 4] [5 0] [7 9] [8 2]])]
     (is (= (nearest-neighbor tree [3 9])
-           {:point [4 8] :dist-squared 2}))))
+           (kdtree/Result. [4 8] 2)))))
 
 ;;; A simple 2d example.
 (deftest- Neighbors-2d-Example
