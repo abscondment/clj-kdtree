@@ -2,6 +2,9 @@
   (:use [kdtree] :reload)
   (:use [clojure.test]))
 
+;; pull in private function
+(def dist-squared (ns-resolve 'kdtree 'dist-squared))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TESTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

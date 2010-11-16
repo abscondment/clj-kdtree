@@ -1,9 +1,9 @@
-;; Copyright (C) 2009 Brendan Ribera. All rights reserved.
+;; Copyright (C) 2009-2010 Brendan Ribera. All rights reserved.
 ;; Distributed under the MIT License; see the file LICENSE
 ;; at the root of this distribution.
 (ns kdtree)
 
-(defn dist-squared [a b]
+(defn- dist-squared [a b]
   "Compute the K-dimensional distance between two points"
   (reduce + (for [i (range (count a))]
               (let [v (- (nth a i) (nth b i))]
