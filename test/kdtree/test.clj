@@ -6,9 +6,15 @@
 ;; pull in private function
 (def dist-squared (ns-resolve 'kdtree 'dist-squared))
 
+(defn- point-to-ints [p]
+  ((comp vec (partial map int)) p))
+
+(defn- results-to-int-points [r]
+  (map (comp point-to-ints :point) r))
+
 (defn- legible-tree [t]
   (if (not (nil? t))
-    (let [val (.value t)
+    (let [val (point-to-ints (seq (.value t)))
           left (.left t)
           right (.right t)]
       (if (or left right)
@@ -101,7 +107,7 @@
 (deftest- Neighbors-2d-Example-Wikipedia
   (let [tree (build-tree [[1 11] [2 5] [4 8] [6 4] [5 0] [7 9] [8 2]])]
     (is (= (nearest-neighbor tree [3 9])
-           (kdtree/Result. [4 8] 2)))))
+           (kdtree/Result. [4.0 8.0] 2.0)))))
 
 ;;; A simple 2d example.
 (deftest- Neighbors-2d-Example
@@ -109,12 +115,13 @@
         tree (build-tree points)]
     ;;; Confirm that the nearest hit is one of the four
     ;;; points that are root 2 away.
-    (is (= 2 (:dist-squared (nearest-neighbor tree [2 2]))))
+    (is (== 2 (:dist-squared (nearest-neighbor tree [2 2]))))
     ;; Confirm that the four nearest are our points on the 1 and 3 lines.
-    (is (= (sort (map :point (nearest-neighbor tree [2 2] 4)))
+    (is (= (sort
+            (results-to-int-points (nearest-neighbor tree [2 2] 4)))
            '([1 1] [1 3] [3 1] [3 3])))
     ;; Confirm that the ones after our first 4 = rest in ascending order.
-    (is (= (drop 4 (map :point (nearest-neighbor tree [2 2] (count points))))
+    (is (= (drop 4 (results-to-int-points (nearest-neighbor tree [2 2] (count points))))
            (drop 4 (sort points))))))
 
 ;;; Some real-world location comparisons.

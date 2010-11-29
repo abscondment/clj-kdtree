@@ -3,7 +3,7 @@
 ;; at the root of this distribution.
 (ns kdtree)
 
-(defrecord Node [left right value depth])
+(defrecord Node [left right #^doubles value #^long depth])
 (defrecord Result [point dist-squared])
 
 (defn- dist-squared [a b]
@@ -30,7 +30,7 @@ points are of the same dimension."
                  right-tree (build-tree
                              (subvec points (inc median))
                              (inc depth))]
-             (Node. left-tree right-tree (nth points median) depth))))))
+             (Node. left-tree right-tree (into-array Double/TYPE (nth points median)) depth))))))
 
 (comment
   (defn insert
@@ -64,17 +64,17 @@ otherwise, the result is a list of length n."
                                              (list :left :right))
 
                               ;; Compute best list for the near-side of the search order
-                              best-near
-                              (nearest-neighbor ((first search-order) tree)
-                                                point
-                                                n
-                                                (inc depth)
-                                                (cons
-                                                 (Result. (:value tree)
-                                                          (dist-squared
-                                                           (:value tree)
-                                                           point))
-                                                      best))]
+                              best-near (nearest-neighbor
+                                         ((first search-order) tree)
+                                         point
+                                         n
+                                         (inc depth)
+                                         (cons
+                                          (Result. (vec (:value tree))
+                                                   (dist-squared
+                                                    (:value tree)
+                                                    point))
+                                          best))]
              
                           ;; If the square distance of our search node to point in the
                           ;; current dimension is still better than the *worst* of the near-
