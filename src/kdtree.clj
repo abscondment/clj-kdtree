@@ -32,16 +32,25 @@ points are of the same dimension."
                              (inc depth))]
              (Node. left-tree right-tree (into-array Double/TYPE (nth points median)) depth))))))
 
-(comment
-  (defn insert
-   "Adds a point to an existing tree."
-   ([tree point] (insert tree point 0))
-   ([tree point depth]
+(defn insert
+  "Adds a point to an existing tree."
+  ([tree point] (insert tree point 0))
+  ([tree point depth]
+     (let [k (count point)
+           dimension (mod depth k)]
       (if (nil? tree)
-        (list point)
-       
-        )
-      )))
+        (Node. nil nil (into-array Double/TYPE point) depth)
+        (if (< (nth point dimension) (nth (:value tree) dimension))
+          (Node.
+           (insert (:left tree) point (inc depth))
+           (:right tree)
+           (:value tree)
+           (:depth tree))
+          (Node.
+           (:left tree)
+           (insert (:right tree) point (inc depth))
+           (:value tree)
+           (:depth tree)))))))
 
 (defn nearest-neighbor
   "Compute n nearest neighbors for a point. If n is

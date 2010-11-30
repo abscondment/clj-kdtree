@@ -152,3 +152,47 @@
         tree (build-tree points)]
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
+
+
+;;; Insertion tests that repeat prior point combinations, but build the
+;;; underlying trees using insert.
+
+;;; Mimic Neighbors-2d-Example, but build the tree normally and add one point
+;;; via insert.
+(deftest- Insert-2d-Example
+  (let [points [[8 8] [3 1] [6 6] [7 7] [3 3] [1 3] [4 4] [5 5]]
+        tree (insert (build-tree points) [1 1])]
+    (is (== 2 (:dist-squared (nearest-neighbor tree [2 2]))))
+    (is (= (sort
+            (results-to-int-points
+             (nearest-neighbor tree [2 2] 4)))
+           '([1 1] [1 3] [3 1] [3 3])))
+    (is (= (drop 4 (results-to-int-points
+                    (nearest-neighbor tree [2 2] (inc (count points)))))
+           (drop 4 (sort (conj points [1 1])))))))
+
+;;; Mimic Neighbors-2d-Example, but build the tree entirely by using insert.
+(deftest- Insert-Build-2d-Example
+  (let [points [[8 8] [3 1] [1 1] [6 6] [7 7] [3 3] [1 3] [4 4] [5 5]]
+        tree (reduce insert nil points)]
+    (is (== 2 (:dist-squared (nearest-neighbor tree [2 2]))))
+    (is (= (sort
+            (results-to-int-points (nearest-neighbor tree [2 2] 4)))
+           '([1 1] [1 3] [3 1] [3 3])))
+    (is (= (drop 4 (results-to-int-points (nearest-neighbor tree [2 2] (count points))))
+           (drop 4 (sort points))))))
+
+;;; Mimic Neighbors-4d-Example, but build the tree half by build-tree and
+;;; half by insert.
+(deftest- Insert-4d-Example
+  (let [points (vec (map #(list (Math/pow Math/PI (/ % 2))
+                                (Math/pow Math/PI %)
+                                (Math/sqrt (* % % Math/E))
+                                (Math/pow Math/E %))
+                         (range 1 4000)))
+        median (quot (count points) 2)
+        tree (reduce insert
+                     (build-tree (subvec points (inc median)))
+                     (subvec points 0 median))]
+    (is (= (first points)
+           (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
