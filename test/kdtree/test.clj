@@ -48,6 +48,10 @@
             (* 6.1 6.1)
             (* 7.0 7.0)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Tree-building tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;; 2d-tree example found at: http://en.wikipedia.org/wiki/Kd-tree
 (deftest- Build-2d-Example-Wikipedia
   (let [tree (legible-tree
@@ -91,6 +95,10 @@
                   ([3 1 4] ([2 3 1]) nil)
                   ([1 9 9]))
                ([7 6 5] ([8 5 4]) ([6 8 7])))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Nearest-neighbor tests.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Test that search results match the naïve sort-by-distance algorithm.
 (deftest- Neighbors-Sorting-Example
@@ -153,9 +161,10 @@
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Insertion tests that repeat prior point combinations, but build the
 ;;; underlying trees using insert.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Mimic Neighbors-2d-Example, but build the tree normally and add one point
 ;;; via insert.
@@ -196,3 +205,65 @@
                      (subvec points 0 median))]
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Deletion tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Test find-min in various dimensions
+(deftest- Test-find-min
+  (let [points [[0.0 1.4 1.9 3.4]
+                [123 0.1 4.3 6.6]
+                [0.1 0.2 0.3 0.4]
+                [5.0 6.0 7.0 0.1]
+                [0.2 0.3 0.4 0.5]
+                [1.8 1.9 101 1.5]
+                [0.2 0.3 0.4 0.5]
+                [0.3 0.4 0.5 0.6]
+                [0.4 0.5 0.6 0.7]
+                [0.5 0.6 0.7 0.8]
+                [0.6 0.7 0.8 0.9]
+                [0.7 0.8 0.9 1.0]
+                [1.0 2.0 3.0 4.0]
+                [999 999 999 999]]
+        tree (build-tree points)]
+    (doall
+     (for [n (range (count (first points)))]
+       (is (= (map double (nth points n))
+              (vec (find-min tree n))))))))
+
+(deftest- Test-delete-root
+  (let [tree
+        (Node.
+         (Node.
+          (Node.
+           nil
+           (Node. nil nil [20 20] 3)
+           [10 35] 2)
+          nil
+          [20 45] 1)
+         (Node.
+          (Node.
+           (Node.
+            (Node.
+             nil
+             (Node. nil nil [60 10] 5) 
+             [70 20] 4)
+            nil
+            [50 30] 3)
+           (Node. nil nil [90 60] 3)
+           [80 40] 2)
+          nil
+          [60 80] 1)
+         [35 60]
+         0)]
+    (is (= (legible-tree
+           (delete tree [35 60]))
+          '([50 30]
+              ([20 45]
+                 ([10 35] nil ([20 20])))
+              ([60 80]
+                 ([80 40]
+                    ([60 10] nil ([70 20]))
+                    ([90 60]))))))))
+

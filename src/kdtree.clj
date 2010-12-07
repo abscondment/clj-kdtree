@@ -52,6 +52,79 @@ points are of the same dimension."
            (:value tree)
            (:depth tree)))))))
 
+(defn find-min
+  "Locate the point with the smallest value in a given dimension.
+Used internally by the delete function. Runs in O(√n) time for a
+balanced tree."
+  ([tree dimension] (find-min tree dimension 0))
+  ([tree dimension depth]
+     (if (identity tree)
+       (let [k (count (:value tree))]
+         (if (= dimension (mod depth k))
+           ;; if we're at the dimension of interest, follow the left branch or
+           ;; take the value - left is always smaller in the currend dimension
+           (if (nil? (:left tree))
+             (:value tree)
+             (find-min (:left tree) dimension (inc depth)))
+           ;; otherwise, compare min of self & children
+           (first
+            (sort-by #(nth % dimension)
+             (filter identity
+              (list (:value tree)
+                    (find-min (:left tree) dimension (inc depth))
+                    (find-min (:right tree) dimension (inc depth)))))))))))
+
+(defn delete
+  "Delete value at the given point. Runs in O(log n) time for a balanced tree."
+  ([tree point] (delete tree point 0))
+  ([tree point depth]
+     (if (identity tree)
+       (let [k (count (:value tree))
+             dimension (mod depth k)]
+         (cond
+          ;; point is to the left
+          (< (nth point dimension)
+             (nth (:value tree) dimension))
+          (Node.
+           (delete (:left tree) point (inc depth))
+           (:right tree)
+           (:value tree)
+           (:depth tree))
+          
+          ;; point is to the right
+          (> (nth point dimension)
+             (nth (:value tree) dimension))
+          (Node.
+           (:left tree)
+           (delete (:right tree) point (inc depth))
+           (:value tree)
+           (:depth tree))
+
+          ;; point is here... three cases:
+          
+          ;; leaf node - delete case, so return nil
+          (= nil (:left tree) (:right tree))
+          nil
+
+          ;; right is not null.
+          (not (nil? (:right tree)))
+          (let [value (find-min (:right tree) dimension (inc depth))]
+            (Node.
+             (:left tree)
+             (delete (:right tree) value (inc depth))
+             value
+             (:depth tree)))
+
+          ;; right is null, left must not be.
+          true
+          (let [value (find-min (:left tree) dimension (inc depth))]
+            (Node.
+             nil
+             (delete (:right tree) value (inc depth))
+             value
+             (:depth tree))))))))
+
+
 (defn nearest-neighbor
   "Compute n nearest neighbors for a point. If n is
 omitted, the result is the nearest neighbor;
