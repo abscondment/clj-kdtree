@@ -140,33 +140,33 @@ otherwise, the result is a list of length n."
 
          ;; Otherwise, recurse!
          (take n
-               (sort-by :dist-squared
-                        (let [dimension (mod depth (count point))
-                              dim-dist (- (nth point dimension)
-                                          (nth (:value tree) dimension))
-                              search-order (if (> dim-dist 0)
-                                             (list :right :left)
-                                             (list :left :right))
+          (sort-by :dist-squared
+           (let [dimension (mod depth (count point))
+                 dim-dist (- (nth point dimension)
+                             (nth (:value tree) dimension))
+                 search-order (if (> dim-dist 0)
+                                (list :right :left)
+                                (list :left :right))
 
-                              ;; Compute best list for the near-side of the search order
-                              best-near (nearest-neighbor
-                                         ((first search-order) tree)
-                                         point
-                                         n
-                                         (inc depth)
-                                         (cons
-                                          (Result. (vec (:value tree))
-                                                   (dist-squared
-                                                    (:value tree)
-                                                    point))
-                                          best))]
+                 ;; Compute best list for the near-side of the search order
+                 best-near (nearest-neighbor
+                            ((first search-order) tree)
+                            point
+                            n
+                            (inc depth)
+                            (cons
+                             (Result. (vec (:value tree))
+                                      (dist-squared
+                                       (:value tree)
+                                       point))
+                             best))]
              
-                          ;; If the square distance of our search node to point in the
-                          ;; current dimension is still better than the *worst* of the near-
-                          ;; side best list, there may be a better solution on the far
-                          ;; side. Compute & combine with near-side solutions.
-                          (if (< (* dim-dist dim-dist) (:dist-squared (last best-near)))
-                            (concat best-near
-                                    (nearest-neighbor
-                                     ((last search-order) tree) point n (inc depth) nil))
-                            best-near)))))))
+             ;; If the square distance of our search node to point in the
+             ;; current dimension is still better than the *worst* of the near-
+             ;; side best list, there may be a better solution on the far
+             ;; side. Compute & combine with near-side solutions.
+             (if (< (* dim-dist dim-dist) (:dist-squared (last best-near)))
+               (concat best-near
+                       (nearest-neighbor
+                        ((last search-order) tree) point n (inc depth) nil))
+               best-near)))))))
