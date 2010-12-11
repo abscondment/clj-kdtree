@@ -14,9 +14,9 @@
 
 (defn- legible-tree [t]
   (if (not (nil? t))
-    (let [val (point-to-ints (seq (.value t)))
-          left (.left t)
-          right (.right t)]
+    (let [val (point-to-ints (seq (:value t)))
+          left (:left t)
+          right (:right t)]
       (if (or left right)
         (list val (legible-tree left) (legible-tree right))
         (list val)))))
@@ -246,8 +246,8 @@
           (Node.
            (Node.
             (Node.
-             nil
              (Node. nil nil [60 10] 5) 
+             nil
              [70 20] 4)
             nil
             [50 30] 3)
@@ -261,9 +261,10 @@
            (delete tree [35 60]))
           '([50 30]
               ([20 45]
-                 ([10 35] nil ([20 20])))
+                 ([10 35] nil ([20 20]))
+                 nil)
               ([60 80]
                  ([80 40]
                     ([60 10] nil ([70 20]))
-                    ([90 60]))))))))
-
+                    ([90 60]))
+                 nil))))))

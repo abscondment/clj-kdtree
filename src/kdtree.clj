@@ -30,7 +30,10 @@ points are of the same dimension."
                  right-tree (build-tree
                              (subvec points (inc median))
                              (inc depth))]
-             (Node. left-tree right-tree (into-array Double/TYPE (nth points median)) depth))))))
+             (Node. left-tree
+                    right-tree
+                    (into-array Double/TYPE (nth points median))
+                    depth))))))
 
 (defn insert
   "Adds a point to an existing tree."
@@ -120,7 +123,7 @@ balanced tree."
           (let [value (find-min (:left tree) dimension (inc depth))]
             (Node.
              nil
-             (delete (:right tree) value (inc depth))
+             (delete (:left tree) value (inc depth))
              value
              (:depth tree))))))))
 
