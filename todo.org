@@ -8,10 +8,7 @@ TODOs for clj-kdtree
 * Future
 ** TODO node metadata? (unique id)
 * For 1.0
-** TODO insert, delete
-** TODO make helpers private
-** TODO Store points internally as native arrays.
-** TODO Use defrecord for nodes.
-
-
-
+** DONE insert, delete
+** DONE make helpers private
+** DONE Store points internally as native arrays.
+** DONE Use defrecord for nodes.

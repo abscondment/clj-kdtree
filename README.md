@@ -20,7 +20,7 @@ For more detail, refer to [Wikipedia on Kd-trees](http://en.wikipedia.org/wiki/K
 
 ## License
 
-Copyright (C) 2009 Brendan Ribera. All rights reserved.
+Copyright (C) 2009-2010 Brendan Ribera. All rights reserved.
 
 Distributed under the MIT License; see the file LICENSE at the root of
 this distribution.

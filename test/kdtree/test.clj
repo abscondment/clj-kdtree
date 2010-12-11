@@ -1,6 +1,25 @@
 (ns kdtree.test
   (:use [kdtree] :reload)
+  (:import [kdtree Node Result])
   (:use [clojure.test]))
+
+;; pull in private function
+(def dist-squared (ns-resolve 'kdtree 'dist-squared))
+
+(defn- point-to-ints [p]
+  ((comp vec (partial map int)) p))
+
+(defn- results-to-int-points [r]
+  (map (comp point-to-ints :point) r))
+
+(defn- legible-tree [t]
+  (if (not (nil? t))
+    (let [val (point-to-ints (seq (:value t)))
+          left (:left t)
+          right (:right t)]
+      (if (or left right)
+        (list val (legible-tree left) (legible-tree right))
+        (list val)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TESTS
@@ -29,18 +48,25 @@
             (* 6.1 6.1)
             (* 7.0 7.0)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Tree-building tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;; 2d-tree example found at: http://en.wikipedia.org/wiki/Kd-tree
 (deftest- Build-2d-Example-Wikipedia
-  (let [tree (build-tree [[4 7] [2 3] [5 4] [9 6] [8 1] [7 2]])]
+  (let [tree (legible-tree
+              (build-tree [[4 7] [2 3] [5 4] [9 6] [8 1] [7 2]]))]
     (is (= tree
            '([7 2]
                ([5 4] ([2 3]) ([4 7]))
                ([9 6] ([8 1]) nil))))))
 
+
 ;;; Simple 3d-tree
 (deftest- Build-3d-Example-A
-  (let [tree (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
-                          [4 4 4] [1 1 1] [3 3 3] [8 8 8]])]
+  (let [tree (legible-tree
+              (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
+                           [4 4 4] [1 1 1] [3 3 3] [8 8 8]]))]
     (is (= tree
            '([5 5 5]
                ([3 3 3]
@@ -50,8 +76,9 @@
 
 ;;; Variation on simple 3d-tree
 (deftest- Build-3d-Example-B
-  (let [tree (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
-                          [4 4 4] [1 1 1] [3 3 3]])]
+  (let [tree (legible-tree
+              (build-tree [[5 5 5] [2 2 2] [6 6 6] [7 7 7]
+                           [4 4 4] [1 1 1] [3 3 3]]))]
     (is (= tree
            '([4 4 4]
                ([2 2 2] ([1 1 1]) ([3 3 3]))
@@ -59,8 +86,9 @@
 
 ;;; Slightly more complicated 3d-tree
 (deftest- Build-3d-Example-C
-  (let [tree (build-tree [[1 9 9] [2 3 1] [3 1 4] [4 7 6]
-                          [5 2 3] [6 8 7] [7 6 5] [8 5 4]])]
+  (let [tree (legible-tree
+              (build-tree [[1 9 9] [2 3 1] [3 1 4] [4 7 6]
+                           [5 2 3] [6 8 7] [7 6 5] [8 5 4]]))]
     (is (= tree
            '([5 2 3]
                ([4 7 6]
@@ -68,6 +96,9 @@
                   ([1 9 9]))
                ([7 6 5] ([8 5 4]) ([6 8 7])))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Nearest-neighbor tests.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Test that search results match the naïve sort-by-distance algorithm.
 (deftest- Neighbors-Sorting-Example
@@ -84,7 +115,7 @@
 (deftest- Neighbors-2d-Example-Wikipedia
   (let [tree (build-tree [[1 11] [2 5] [4 8] [6 4] [5 0] [7 9] [8 2]])]
     (is (= (nearest-neighbor tree [3 9])
-           {:point [4 8] :dist-squared 2}))))
+           (kdtree/Result. [4.0 8.0] 2.0)))))
 
 ;;; A simple 2d example.
 (deftest- Neighbors-2d-Example
@@ -92,12 +123,13 @@
         tree (build-tree points)]
     ;;; Confirm that the nearest hit is one of the four
     ;;; points that are root 2 away.
-    (is (= 2 (:dist-squared (nearest-neighbor tree [2 2]))))
+    (is (== 2 (:dist-squared (nearest-neighbor tree [2 2]))))
     ;; Confirm that the four nearest are our points on the 1 and 3 lines.
-    (is (= (sort (map :point (nearest-neighbor tree [2 2] 4)))
+    (is (= (sort
+            (results-to-int-points (nearest-neighbor tree [2 2] 4)))
            '([1 1] [1 3] [3 1] [3 3])))
     ;; Confirm that the ones after our first 4 = rest in ascending order.
-    (is (= (drop 4 (map :point (nearest-neighbor tree [2 2] (count points))))
+    (is (= (drop 4 (results-to-int-points (nearest-neighbor tree [2 2] (count points))))
            (drop 4 (sort points))))))
 
 ;;; Some real-world location comparisons.
@@ -128,3 +160,111 @@
         tree (build-tree points)]
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Insertion tests that repeat prior point combinations, but build the
+;;; underlying trees using insert.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Mimic Neighbors-2d-Example, but build the tree normally and add one point
+;;; via insert.
+(deftest- Insert-2d-Example
+  (let [points [[8 8] [3 1] [6 6] [7 7] [3 3] [1 3] [4 4] [5 5]]
+        tree (insert (build-tree points) [1 1])]
+    (is (== 2 (:dist-squared (nearest-neighbor tree [2 2]))))
+    (is (= (sort
+            (results-to-int-points
+             (nearest-neighbor tree [2 2] 4)))
+           '([1 1] [1 3] [3 1] [3 3])))
+    (is (= (drop 4 (results-to-int-points
+                    (nearest-neighbor tree [2 2] (inc (count points)))))
+           (drop 4 (sort (conj points [1 1])))))))
+
+;;; Mimic Neighbors-2d-Example, but build the tree entirely by using insert.
+(deftest- Insert-Build-2d-Example
+  (let [points [[8 8] [3 1] [1 1] [6 6] [7 7] [3 3] [1 3] [4 4] [5 5]]
+        tree (reduce insert nil points)]
+    (is (== 2 (:dist-squared (nearest-neighbor tree [2 2]))))
+    (is (= (sort
+            (results-to-int-points (nearest-neighbor tree [2 2] 4)))
+           '([1 1] [1 3] [3 1] [3 3])))
+    (is (= (drop 4 (results-to-int-points (nearest-neighbor tree [2 2] (count points))))
+           (drop 4 (sort points))))))
+
+;;; Mimic Neighbors-4d-Example, but build the tree half by build-tree and
+;;; half by insert.
+(deftest- Insert-4d-Example
+  (let [points (vec (map #(list (Math/pow Math/PI (/ % 2))
+                                (Math/pow Math/PI %)
+                                (Math/sqrt (* % % Math/E))
+                                (Math/pow Math/E %))
+                         (range 1 4000)))
+        median (quot (count points) 2)
+        tree (reduce insert
+                     (build-tree (subvec points (inc median)))
+                     (subvec points 0 median))]
+    (is (= (first points)
+           (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Deletion tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Test find-min in various dimensions
+(deftest- Test-find-min
+  (let [points [[0.0 1.4 1.9 3.4]
+                [123 0.1 4.3 6.6]
+                [0.1 0.2 0.3 0.4]
+                [5.0 6.0 7.0 0.1]
+                [0.2 0.3 0.4 0.5]
+                [1.8 1.9 101 1.5]
+                [0.2 0.3 0.4 0.5]
+                [0.3 0.4 0.5 0.6]
+                [0.4 0.5 0.6 0.7]
+                [0.5 0.6 0.7 0.8]
+                [0.6 0.7 0.8 0.9]
+                [0.7 0.8 0.9 1.0]
+                [1.0 2.0 3.0 4.0]
+                [999 999 999 999]]
+        tree (build-tree points)]
+    (doall
+     (for [n (range (count (first points)))]
+       (is (= (map double (nth points n))
+              (vec (find-min tree n))))))))
+
+(deftest- Test-delete-root
+  (let [tree
+        (Node.
+         (Node.
+          (Node.
+           nil
+           (Node. nil nil [20 20] 3)
+           [10 35] 2)
+          nil
+          [20 45] 1)
+         (Node.
+          (Node.
+           (Node.
+            (Node.
+             (Node. nil nil [60 10] 5) 
+             nil
+             [70 20] 4)
+            nil
+            [50 30] 3)
+           (Node. nil nil [90 60] 3)
+           [80 40] 2)
+          nil
+          [60 80] 1)
+         [35 60]
+         0)]
+    (is (= (legible-tree
+           (delete tree [35 60]))
+          '([50 30]
+              ([20 45]
+                 ([10 35] nil ([20 20]))
+                 nil)
+              ([60 80]
+                 ([80 40]
+                    ([60 10] nil ([70 20]))
+                    ([90 60]))
+                 nil))))))
