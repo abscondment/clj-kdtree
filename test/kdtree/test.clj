@@ -268,3 +268,11 @@
                     ([60 10] nil ([70 20]))
                     ([90 60]))
                  nil))))))
+
+(deftest- Retains-Metadata
+  (let [metadata {:arbitrary "Data!"}
+        tree (build-tree [[1 11] [2 5] (with-meta [4 8] metadata) [6 4] [5 0] [7 9] [8 2]])]
+    (is (= (nearest-neighbor tree [3 9])
+           (kdtree/Result. [4.0 8.0] 2.0)))
+    (is (= (meta (nearest-neighbor tree [3 9]))
+           metadata))))
