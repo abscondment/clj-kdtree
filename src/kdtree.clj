@@ -33,7 +33,9 @@ points are of the same dimension."
              (Node. left-tree
                     right-tree
                     (into-array Double/TYPE (nth points median))
-                    depth))))))
+                    depth
+                    (meta (nth points median))
+                    nil))))))
 
 (defn insert
   "Adds a point to an existing tree."
@@ -156,9 +158,9 @@ otherwise, the result is a list of length n."
                             (inc depth)
                             (cons
                              (Result. (vec (:value tree))
-                                      (dist-squared
-                                       (:value tree)
-                                       point))
+                                      (dist-squared (:value tree) point)
+                                      (meta tree)
+                                      nil)
                              best))]
              
              ;; If the square distance of our search node to point in the
