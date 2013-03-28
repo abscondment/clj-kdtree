@@ -2,3 +2,4 @@ classes
 pom.xml
 *.jar
 .lein-*
+/target
