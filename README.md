@@ -37,7 +37,7 @@ For more detail, refer to [Wikipedia on Kd-trees](http://en.wikipedia.org/wiki/K
 
 ## License
 
-Copyright (C) 2009-2012 Brendan Ribera. All rights reserved.
+Copyright (C) 2009-2013 Brendan Ribera. All rights reserved.
 
 Distributed under the MIT License; see the file LICENSE at the root of
 this distribution.
