@@ -21,6 +21,10 @@
         (list val (legible-tree left) (legible-tree right))
         (list val)))))
 
+(defn- ds
+  [& args]
+  (double-array args))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TESTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -61,6 +65,16 @@
                ([5 4] ([2 3]) ([4 7]))
                ([9 6] ([8 1]) nil))))))
 
+;;; Set of points with duplicate x and y coordinates
+(deftest- Build-2d-Example-B
+  (let [tree (legible-tree
+               (build-tree [[0 0] [0 1] [0 2] [2 2] [2 0]]))]
+    (is (= tree
+           '([0 0]
+              nil
+              ([0 2]
+                ([2 0] ([0 1]) nil)
+                ([2 2])))))))
 
 ;;; Simple 3d-tree
 (deftest- Build-3d-Example-A
@@ -238,24 +252,24 @@
          (Node.
           (Node.
            nil
-           (Node. nil nil [20 20] 3)
-           [10 35] 2)
+           (Node. nil nil (ds 20 20) 3)
+           (ds 10 35) 2)
           nil
-          [20 45] 1)
+          (ds 20 45) 1)
          (Node.
           (Node.
            (Node.
             (Node.
-             (Node. nil nil [60 10] 5) 
+             (Node. nil nil (ds 60 10) 5)
              nil
-             [70 20] 4)
+             (ds 70 20) 4)
             nil
-            [50 30] 3)
-           (Node. nil nil [90 60] 3)
-           [80 40] 2)
+            (ds 50 30) 3)
+           (Node. nil nil (ds 90 60) 3)
+           (ds 80 40) 2)
           nil
-          [60 80] 1)
-         [35 60]
+          (ds 60 80) 1)
+          (ds 35 60)
          0)]
     (is (= (legible-tree
            (delete tree [35 60]))
@@ -268,6 +282,13 @@
                     ([60 10] nil ([70 20]))
                     ([90 60]))
                  nil))))))
+
+(deftest- Test-delete-same-x
+  (let [ points [[0 0] [0 0.5] [0 1] [1 1] [1 0]]
+         tree (kdtree/build-tree points)
+         tree-del-00 (kdtree/delete tree [0 0])]
+    (is (= (map double [0 0.5])
+           (seq (:point (kdtree/nearest-neighbor tree-del-00 [0 0])))))))
 
 (deftest- Retains-Metadata
   (let [metadata {:arbitrary "Data!"}

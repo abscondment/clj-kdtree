@@ -24,17 +24,24 @@ points are of the same dimension."
                  dimension (mod depth k)
                  points (vec (sort-by #(nth % dimension) points))
                  median (quot point-count 2)
+                 split-point (loop [n median]
+                               (cond
+                                 (= 0 n) n
+                                 (= (nth (points n) dimension)
+                                    (nth (points (dec n)) dimension))
+                                      (recur (dec n))
+                                 :else n))
                  left-tree (build-tree
-                            (subvec points 0 median)
+                            (subvec points 0 split-point)
                             (inc depth))
                  right-tree (build-tree
-                             (subvec points (inc median))
+                             (subvec points (inc split-point))
                              (inc depth))]
              (Node. left-tree
                     right-tree
-                    (into-array Double/TYPE (nth points median))
+                    (into-array Double/TYPE (nth points split-point))
                     depth
-                    (meta (nth points median))
+                    (meta (nth points split-point))
                     nil))))))
 
 (defn insert
@@ -97,8 +104,10 @@ balanced tree."
            (:depth tree))
           
           ;; point is to the right
-          (> (nth point dimension)
-             (nth (:value tree) dimension))
+          (and
+            (>= (nth point dimension)
+                (nth (:value tree) dimension))
+            (not= (map double point) (seq (:value tree))))
           (Node.
            (:left tree)
            (delete (:right tree) point (inc depth))
