@@ -51,18 +51,22 @@ points are of the same dimension."
      (let [k (count point)
            dimension (mod depth k)]
       (if (nil? tree)
-        (Node. nil nil (into-array Double/TYPE point) depth)
+        (Node. nil nil (into-array Double/TYPE point) depth (meta point) nil)
         (if (< (nth point dimension) (nth (:value tree) dimension))
           (Node.
            (insert (:left tree) point (inc depth))
            (:right tree)
            (:value tree)
-           (:depth tree))
+           (:depth tree)
+           (meta tree)
+           nil)
           (Node.
            (:left tree)
            (insert (:right tree) point (inc depth))
            (:value tree)
-           (:depth tree)))))))
+           (:depth tree)
+           (meta tree)
+           nil))))))
 
 (defn find-min
   "Locate the point with the smallest value in a given dimension.
@@ -101,7 +105,9 @@ balanced tree."
            (delete (:left tree) point (inc depth))
            (:right tree)
            (:value tree)
-           (:depth tree))
+           (:depth tree)
+           (meta tree)
+           nil)
           
           ;; point is to the right
           (and
@@ -112,7 +118,9 @@ balanced tree."
            (:left tree)
            (delete (:right tree) point (inc depth))
            (:value tree)
-           (:depth tree))
+           (:depth tree)
+           (meta tree)
+           nil)
 
           ;; point is here... three cases:
           
@@ -127,7 +135,9 @@ balanced tree."
              (:left tree)
              (delete (:right tree) value (inc depth))
              value
-             (:depth tree)))
+             (:depth tree)
+             (meta tree)
+             nil))
 
           ;; right is null, left must not be.
           true
@@ -136,7 +146,9 @@ balanced tree."
              nil
              (delete (:left tree) value (inc depth))
              value
-             (:depth tree))))))))
+             (:depth tree)
+             (meta tree)
+             nil)))))))
 
 
 (defn nearest-neighbor
