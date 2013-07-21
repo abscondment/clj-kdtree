@@ -297,3 +297,25 @@
            (kdtree/Result. [4.0 8.0] 2.0)))
     (is (= (meta (nearest-neighbor tree [3 9]))
            metadata))))
+
+(deftest- Delete-Retains-Metadata
+  ;; create a tree, delete nothing, assert that all metas are non-null
+  (is (every?
+       (comp not nil?)
+       (-> (for [i (range 5)]
+             (with-meta [i i] {:value i}))
+           (build-tree)
+           (delete [0 0])
+           (nearest-neighbor [0 0] 4)
+           (->> (map meta))))))
+
+(deftest- Insert-Retains-Metadata
+  ;; create a tree, insert, assert that all metas are non-null
+  (is (every?
+       (comp not nil?)
+       (-> (for [i (range 5)]
+             (with-meta [i i] {:value i}))
+           (build-tree)
+           (insert (with-meta [0 0] {:value 0}))
+           (nearest-neighbor [0 0] 5)
+           (->> (map meta))))))
