@@ -80,13 +80,13 @@ balanced tree."
            ;; if we're at the dimension of interest, follow the left branch or
            ;; take the value - left is always smaller in the currend dimension
            (if (nil? (:left tree))
-             (:value tree)
+             (with-meta (vec (:value tree)) (meta tree))
              (find-min (:left tree) dimension (inc depth)))
            ;; otherwise, compare min of self & children
            (first
             (sort-by #(nth % dimension)
              (filter identity
-              (list (:value tree)
+              (list (with-meta (vec (:value tree)) (meta tree))
                     (find-min (:left tree) dimension (inc depth))
                     (find-min (:right tree) dimension (inc depth)))))))))))
 
@@ -108,7 +108,7 @@ balanced tree."
            (:depth tree)
            (meta tree)
            nil)
-          
+
           ;; point is to the right
           (and
             (>= (nth point dimension)
@@ -134,9 +134,9 @@ balanced tree."
             (Node.
              (:left tree)
              (delete (:right tree) value (inc depth))
-             value
+             (double-array value)
              (:depth tree)
-             (meta tree)
+             (meta value)
              nil))
 
           ;; right is null, left must not be.
@@ -145,9 +145,9 @@ balanced tree."
             (Node.
              nil
              (delete (:left tree) value (inc depth))
-             value
+             (double-array value)
              (:depth tree)
-             (meta tree)
+             (meta value)
              nil)))))))
 
 

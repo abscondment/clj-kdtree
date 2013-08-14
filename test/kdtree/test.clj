@@ -290,6 +290,15 @@
     (is (= (map double [0 0.5])
            (seq (:point (kdtree/nearest-neighbor tree-del-00 [0 0])))))))
 
+(deftest- Find-Min-Retains-Metadata
+  (let [tree (->> [[0 1 2] [2 3 0] [3 3 3] [4 4 4] [4 0 2]]
+                  (map #(map double %))
+                  (map #(with-meta % {:value %}))
+                  (build-tree))]
+    (doseq [dimension (range 3)]
+      (let [min (find-min tree dimension)]
+        (is (= min (:value (meta min))))))))
+
 (deftest- Retains-Metadata
   (let [metadata {:arbitrary "Data!"}
         tree (build-tree [[1 11] [2 5] (with-meta [4 8] metadata) [6 4] [5 0] [7 9] [8 2]])]
@@ -307,7 +316,23 @@
            (build-tree)
            (delete [0 0])
            (nearest-neighbor [0 0] 4)
-           (->> (map meta))))))
+           (->> (map meta)))))
+  ;; create a tree and where each point has meta equals to itself
+  ;; randomly delete points and make sure all nodes have correct metadata
+  (letfn [(correct-meta? [{:keys [left right value] :as node}]
+            (if (nil? node) true
+                (and (= (vec value) (:value (meta node)))
+                     (correct-meta? left)
+                     (correct-meta? right))))]
+    (let [points (->> (for [i (range 10) j (range 10)] [(double i) (double j)])
+                      (map #(with-meta % {:value %}))
+                      shuffle)
+          tree (build-tree points)]
+      ;; Just to be sure we have correct meta BEFORE test
+      (is (correct-meta? tree))
+      (is (->> (reductions delete tree points)
+               (map correct-meta?)
+               (every? true?))))))
 
 (deftest- Insert-Retains-Metadata
   ;; create a tree, insert, assert that all metas are non-null
