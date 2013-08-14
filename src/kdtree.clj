@@ -52,21 +52,13 @@ points are of the same dimension."
            dimension (mod depth k)]
       (if (nil? tree)
         (Node. nil nil (into-array Double/TYPE point) depth (meta point) nil)
-        (if (< (nth point dimension) (nth (:value tree) dimension))
-          (Node.
-           (insert (:left tree) point (inc depth))
-           (:right tree)
-           (:value tree)
-           (:depth tree)
-           (meta tree)
-           nil)
-          (Node.
-           (:left tree)
-           (insert (:right tree) point (inc depth))
-           (:value tree)
-           (:depth tree)
-           (meta tree)
-           nil))))))
+        (let [subtree (if (< (nth point dimension) (nth (:value tree) dimension))
+                        :left :right)
+              updated-subtree (insert (subtree tree) point (inc depth))]
+          (assoc-in tree [subtree] updated-subtree)
+          ;;; I don't understand why, but update-in doesn't work well here
+          ;;; It throws StackoverflowException in test Insert-4d-Example
+          )))))
 
 (defn find-min
   "Locate the point with the smallest value in a given dimension.
@@ -80,13 +72,13 @@ balanced tree."
            ;; if we're at the dimension of interest, follow the left branch or
            ;; take the value - left is always smaller in the currend dimension
            (if (nil? (:left tree))
-             (:value tree)
+             (with-meta (vec (:value tree)) (meta tree))
              (find-min (:left tree) dimension (inc depth)))
            ;; otherwise, compare min of self & children
            (first
             (sort-by #(nth % dimension)
              (filter identity
-              (list (:value tree)
+              (list (with-meta (vec (:value tree)) (meta tree))
                     (find-min (:left tree) dimension (inc depth))
                     (find-min (:right tree) dimension (inc depth)))))))))))
 
@@ -101,29 +93,17 @@ balanced tree."
           ;; point is to the left
           (< (nth point dimension)
              (nth (:value tree) dimension))
-          (Node.
-           (delete (:left tree) point (inc depth))
-           (:right tree)
-           (:value tree)
-           (:depth tree)
-           (meta tree)
-           nil)
-          
+          (update-in tree [:left] delete point (inc depth))
+
           ;; point is to the right
           (and
             (>= (nth point dimension)
                 (nth (:value tree) dimension))
             (not= (map double point) (seq (:value tree))))
-          (Node.
-           (:left tree)
-           (delete (:right tree) point (inc depth))
-           (:value tree)
-           (:depth tree)
-           (meta tree)
-           nil)
+          (update-in tree [:right] delete point (inc depth))
 
           ;; point is here... three cases:
-          
+
           ;; leaf node - delete case, so return nil
           (= nil (:left tree) (:right tree))
           nil
@@ -134,9 +114,9 @@ balanced tree."
             (Node.
              (:left tree)
              (delete (:right tree) value (inc depth))
-             value
+             (double-array value)
              (:depth tree)
-             (meta tree)
+             (meta value)
              nil))
 
           ;; right is null, left must not be.
@@ -145,9 +125,9 @@ balanced tree."
             (Node.
              nil
              (delete (:left tree) value (inc depth))
-             value
+             (double-array value)
              (:depth tree)
-             (meta tree)
+             (meta value)
              nil)))))))
 
 
