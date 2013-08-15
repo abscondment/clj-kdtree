@@ -5,6 +5,10 @@
 
 ;; pull in private function
 (def dist-squared (ns-resolve 'kdtree 'dist-squared))
+(def insert-sorted! (ns-resolve 'kdtree 'insert-sorted!))
+
+(defn- dist-squared-vec [a b]
+  (dist-squared (double-array a) (double-array b)))
 
 (defn- point-to-ints [p]
   ((comp vec (partial map int)) p))
@@ -32,25 +36,41 @@
 ;;; Test kD distance-squared function
 (deftest- Distance-Squared
   ;;; Simple 2-d point
-  (is (= (dist-squared [0 0] [1 1]) 2))
+  (is (== (dist-squared-vec [0 0] [1 1]) 2))
   ;;; 2-d using floating points
-  (is (= (dist-squared [Math/PI -1.0] [1.0 Math/PI])
-         (+ (Math/pow (- Math/PI 1) 2) (Math/pow (inc Math/PI) 2))))
+  (is (== (dist-squared-vec [Math/PI -1.0] [1.0 Math/PI])
+          (+ (Math/pow (- Math/PI 1) 2) (Math/pow (inc Math/PI) 2))))
   ;;; Simple 5-d distance
-  (is (= (dist-squared [1 1 1 1 1] [2 2 2 2 2]) 5))
+  (is (== (dist-squared-vec [1 1 1 1 1] [2 2 2 2 2]) 5))
   ;;; 10-d, floating point distance
-  (is (= (dist-squared [0   1   2   3   4   5   6   7   8   9]
-                       [1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0])
-         (+ (* 1.1 1.1)
-            (* 0.2 0.2)
-            (* 0.7 0.7)
-            (* 1.6 1.6)
-            (* 2.5 2.5)
-            (* 3.4 3.4)
-            (* 4.3 4.3)
-            (* 5.2 5.2)
-            (* 6.1 6.1)
-            (* 7.0 7.0)))))
+  (is (== (dist-squared-vec [0   1   2   3   4   5   6   7   8   9]
+                            [1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0])
+          (+ (* 1.1 1.1)
+             (* 0.2 0.2)
+             (* 0.7 0.7)
+             (* 1.6 1.6)
+             (* 2.5 2.5)
+             (* 3.4 3.4)
+             (* 4.3 4.3)
+             (* 5.2 5.2)
+             (* 6.1 6.1)
+             (* 7.0 7.0)))))
+
+
+(deftest- Insert-Sorted
+  (letfn [(to-res [vals]
+            (mapv #(Result. % % nil nil) vals))]
+    (are [vals new-val n expected] (= (-> (to-res vals)
+                                          transient
+                                          (insert-sorted! (Result. new-val new-val nil nil) n)
+                                          persistent!)
+                                      (to-res expected))
+         [1 2 3] 4 5 [1 2 3 4]
+         [2 3 4] 1 5 [1 2 3 4]
+         [1 2 3] 4 3 [1 2 3]
+         [1 2 3] 0 3 [0 1 2]
+         [1 3 4] 2 3 [1 2 3]
+         [] 1 5 [1])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Tree-building tests
@@ -68,13 +88,13 @@
 ;;; Set of points with duplicate x and y coordinates
 (deftest- Build-2d-Example-B
   (let [tree (legible-tree
-               (build-tree [[0 0] [0 1] [0 2] [2 2] [2 0]]))]
+              (build-tree [[0 0] [0 1] [0 2] [2 2] [2 0]]))]
     (is (= tree
            '([0 0]
-              nil
-              ([0 2]
-                ([2 0] ([0 1]) nil)
-                ([2 2])))))))
+               nil
+               ([0 2]
+                  ([2 0] ([0 1]) nil)
+                  ([2 2])))))))
 
 ;;; Simple 3d-tree
 (deftest- Build-3d-Example-A
@@ -121,7 +141,7 @@
                  [(* 0.95 x) (* -1.23 y)])
         cpoint [Math/PI Math/E]
         tree (build-tree points)]
-    (is (= (take 5 (sort-by #(dist-squared cpoint %) points))
+    (is (= (take 5 (sort-by #(dist-squared-vec cpoint %) points))
            (map :point (nearest-neighbor tree cpoint 5))))))
 
 ;;; Simple example based on the search animation from:
@@ -214,8 +234,9 @@
                                 (Math/pow Math/E %))
                          (range 1 4000)))
         median (quot (count points) 2)
+        half-tree (build-tree (subvec points (inc median)))
         tree (reduce insert
-                     (build-tree (subvec points (inc median)))
+                     half-tree
                      (subvec points 0 median))]
     (is (= (first points)
            (:point (nearest-neighbor tree [0.1 0.2 0.3 0.4]))))))
@@ -244,7 +265,7 @@
     (doall
      (for [n (range (count (first points)))]
        (is (= (map double (nth points n))
-              (vec (find-min tree n))))))))
+              (find-min tree n)))))))
 
 (deftest- Test-delete-root
   (let [tree
@@ -252,43 +273,43 @@
          (Node.
           (Node.
            nil
-           (Node. nil nil (ds 20 20) 3)
-           (ds 10 35) 2)
+           (Node. nil nil (ds 20 20))
+           (ds 10 35))
           nil
-          (ds 20 45) 1)
+          (ds 20 45))
          (Node.
           (Node.
            (Node.
             (Node.
-             (Node. nil nil (ds 60 10) 5)
+             (Node. nil nil (ds 60 10))
              nil
-             (ds 70 20) 4)
+             (ds 70 20))
             nil
-            (ds 50 30) 3)
-           (Node. nil nil (ds 90 60) 3)
-           (ds 80 40) 2)
+            (ds 50 30))
+           (Node. nil nil (ds 90 60))
+           (ds 80 40))
           nil
-          (ds 60 80) 1)
-          (ds 35 60)
-         0)]
+          (ds 60 80))
+         (ds 35 60))]
     (is (= (legible-tree
-           (delete tree [35 60]))
-          '([50 30]
-              ([20 45]
-                 ([10 35] nil ([20 20]))
-                 nil)
-              ([60 80]
-                 ([80 40]
-                    ([60 10] nil ([70 20]))
-                    ([90 60]))
-                 nil))))))
+            (delete tree [35 60]))
+           '([50 30]
+               ([20 45]
+                  ([10 35] nil ([20 20]))
+                  nil)
+               ([60 80]
+                  ([80 40]
+                     ([60 10] nil ([70 20]))
+                     ([90 60]))
+                  nil))))))
 
 (deftest- Test-delete-same-x
   (let [ points [[0 0] [0 0.5] [0 1] [1 1] [1 0]]
-         tree (kdtree/build-tree points)
-         tree-del-00 (kdtree/delete tree [0 0])]
+        tree (kdtree/build-tree points)
+        tree-del-00 (kdtree/delete tree [0 0])]
     (is (= (map double [0 0.5])
-           (seq (:point (kdtree/nearest-neighbor tree-del-00 [0 0])))))))
+           (:point (kdtree/nearest-neighbor tree-del-00 [0 0]))))))
+
 
 (deftest- Find-Min-Retains-Metadata
   (let [tree (->> [[0 1 2] [2 3 0] [3 3 3] [4 4 4] [4 0 2]]
@@ -298,6 +319,7 @@
     (doseq [dimension (range 3)]
       (let [min (find-min tree dimension)]
         (is (= min (:value (meta min))))))))
+
 
 (deftest- Retains-Metadata
   (let [metadata {:arbitrary "Data!"}
