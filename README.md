@@ -10,30 +10,32 @@ For more detail, refer to [Wikipedia on Kd-trees](http://en.wikipedia.org/wiki/K
 
 ## Usage
 
-    (require 'kdtree)
+```clojure
+(require 'kdtree)
 
-    (def points [[8 8] [3 1] [6 6] [7 7] [1 3] [4 4] [5 5]])
-    ;; Build a kdtree from a set of points
-    (def tree (kdtree/build-tree points))
-    (println "Tree:" tree)
+(def points [[8 8] [3 1] [6 6] [7 7] [1 3] [4 4] [5 5]])
+;; Build a kdtree from a set of points
+(def tree (kdtree/build-tree points))
+(println "Tree:" tree)
     
-    ;; Use tree to find neighbors for one point given a set of points.
-    (println "\n\nFour points closest to [2 2]:\n"
-             (kdtree/nearest-neighbor tree [2 2] 4))
+;; Use tree to find neighbors for one point given a set of points.
+(println "\n\nFour points closest to [2 2]:\n"
+         (kdtree/nearest-neighbor tree [2 2] 4))
 
-    ;; Same operation, but delete two of the closest points.
-    (println "\n\nFour points with deletion:\n"
-             (kdtree/nearest-neighbor
-              (kdtree/delete
-               (kdtree/delete tree [1 3])
-               [3 1])
-              [2 2] 4))
+;; Same operation, but delete two of the closest points.
+(println "\n\nFour points with deletion:\n"
+         (kdtree/nearest-neighbor
+          (kdtree/delete
+           (kdtree/delete tree [1 3])
+           [3 1])
+          [2 2] 4))
 
-    ;; Same operation, but adding a close point.
-    (println "\n\nFour points with insertion:\n"
-             (kdtree/nearest-neighbor
-              (kdtree/insert tree [1.5 1.5])
-              [2 2] 4))
+;; Same operation, but adding a close point.
+(println "\n\nFour points with insertion:\n"
+         (kdtree/nearest-neighbor
+          (kdtree/insert tree [1.5 1.5])
+          [2 2] 4))
+```
 
 ## License
 
