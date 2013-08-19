@@ -10,6 +10,10 @@ For more detail, refer to [Wikipedia on Kd-trees](http://en.wikipedia.org/wiki/K
 
 ## Usage
 
+Add this to your project.clj `:dependencies` list:
+
+    [clj-kdtree "1.1.2"]
+
 #### Build
 ```clojure
 (require 'kdtree)
@@ -87,7 +91,7 @@ Four points with insertion:
   #kdtree.Result{:point [4.0 4.0], :dist-squared 8.0})
 ```
 
-## Metadata
+#### Metadata
 
 To store arbitrary information in points you can use metadata attached to the points. All tree modification operations like `build-tree`, `insert` and `delete` retain metadata. All query operation like `nearest-neighbor` and `interval-search` return points with corresponded meta:
 
