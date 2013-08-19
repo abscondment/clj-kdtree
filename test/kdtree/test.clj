@@ -366,3 +366,45 @@
            (insert (with-meta [0 0] {:value 0}))
            (nearest-neighbor [0 0] 5)
            (->> (map meta))))))
+
+
+(def inside-interval? (ns-resolve 'kdtree 'inside-interval?))
+
+(deftest- Inside-Interval?
+  (let [interval (map double-array [[0 10] [5 10]])]
+    (are [point expected] (= expected (inside-interval? interval (double-array point)))
+         [5 7] true
+         [10 10] true
+         [0 0] false
+         [20 7] false
+         [0 5] true
+         [9 6] true)))
+
+(deftest- Interval-Search
+  (let [points (for [x (range 11) y (range 11)] [(double x) (double y)])
+        tree (build-tree points)
+        naive-interval-search (fn [interval]
+                                (->> (map double-array points)
+                                     (filter #(inside-interval? (map double-array interval) %))
+                                     (map vec)
+                                     set))]
+    (are [interval] (= (naive-interval-search interval)
+                       (set (interval-search tree interval)))
+         [[0 11] [0 11]]
+         [[20 30] [0 11]]
+         [[0 0] [0 0]]
+         [[5 7] [5 7]]
+         [[-100 100] [-100 100]]
+         [[5 5] [0 10]])))
+
+(deftest- Interval-Search-Retains-Metadata
+  (let [tree (->> (for [x (range 5) y (range 5)] [(double x) (double y)])
+                  (map #(with-meta % {:value %}))
+                  build-tree)
+        valid-meta? (fn [points]
+                      (every? #(= (:value (meta %)) %) points))]
+    (are [interval] (valid-meta? (interval-search tree interval))
+         [[0 5] [0 5]]
+         [[2 2] [2 2]]
+         [[2 2] [1 4]]
+         [[20 30] [0 10]])))

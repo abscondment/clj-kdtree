@@ -224,3 +224,52 @@ otherwise, the result is a list of length n."
           (nearest-neighbor-internal tree (double-array point) n 0)
           (persistent!)
           (map #(update-in % [:point] vec)))))
+
+
+
+(defn- inside-interval? [interval ^doubles point]
+  (let [n (alength point)]
+    (loop [ind 0]
+      (if (== ind n) true
+        (let [^doubles axis-intv (nth interval ind)
+              left (double (aget axis-intv 0))
+              right (double (aget axis-intv 1))
+              value (double (aget point ind))]
+          (if (<= left value right)
+            (recur (inc ind))
+            false))))))
+
+(defn- interval-search-internal [tree interval ^long depth accum]
+  (if (nil? tree)
+    accum
+    (let [^doubles point (:value tree)
+          ;; If current points inside interval - add it to accum.
+          accum (if (inside-interval? interval point)
+                  (conj! accum (with-meta (vec point) (meta tree)))
+                  accum)
+          k (unchecked-remainder-int depth (alength point))
+          dim-value (double (aget point k))
+          ^doubles dim-boundaries (nth interval k)
+          left-boundary (double (aget dim-boundaries 0))
+          right-boundary (double (aget dim-boundaries 1))
+
+          ;;; Go to right subtree only if current dimension value is not to the right of the interval.
+          accum (if (<= dim-value right-boundary)
+                  (interval-search-internal (:right tree) interval (unchecked-inc depth) accum)
+                  accum)
+
+          ;; Go to left subtree only if current dimension is not to the left of the interval.
+          accum (if (> dim-value left-boundary)
+                  (interval-search-internal (:left tree) interval (unchecked-inc depth) accum)
+                  accum)]
+      accum)))
+
+(defn interval-search
+  "Find all points inside given interval.
+Interval is a sequence of boundaries for each dimension.
+Example: interval 0≤x≤10, 5≤y≤20 represented as [[0 10] [5 20]]"
+  [tree interval]
+  (->> (transient [])
+       (interval-search-internal tree (vec (map double-array interval)) 0)
+       (persistent!)))
+

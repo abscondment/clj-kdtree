@@ -8,7 +8,8 @@
   (nearest-neighbor [this point n])
   (insert [this point])
   (delete [this point])
-  (find-min [this dimension]))
+  (find-min [this dimension])
+  (interval-search [this interval]))
 
 (defn build-tree [points type]
   (case type
@@ -26,6 +27,7 @@
   (insert [this point] (kd/insert this point))
   (delete [this point] (kd/delete this point))
   (find-min [this dimension] (kd/find-min this dimension))
+  (interval-search [this interval] (kd/interval-search this interval))
   KDTree
   (delete [this point]
     (->> (into-array Double/TYPE point)
@@ -39,7 +41,11 @@
                                      (* (- v1 v2)
                                         (- v1 v2)))
                                    point p2)))]
-      (map (fn [p] {:point p :dist-squared (dst-sqrd p)}) neibs))))
+      (map (fn [p] {:point p :dist-squared (dst-sqrd p)}) neibs)))
+  (interval-search [this interval]
+    (let [lowk (double-array (map first interval))
+          uppk (double-array (map second interval))]
+      (set (.range this lowk uppk)))))
 
 
 (defn rand-point []
@@ -83,6 +89,18 @@
    (bench-with-tree "delete" type
                     (delete tree (rand-nth points)))))
 
+(defn rand-interval []
+  (let [dx (rand-int 100000)
+        dy (rand-int 100000)
+        x (rand-int 1000000)
+        y (rand-int 1000000)]
+    [[x (+ x dx)]
+     [y (+ y dy)]]))
+
+(defn bench-interval-search [type]
+  (bench-with-tree "itrvl srch" type
+                   (interval-search tree (rand-interval))))
+
 (defn bench-all [type & options]
   (let [bench-opts (if (= (first options) :full) {} *bench-opts*)]
     (binding [*bench-opts* bench-opts
@@ -95,7 +113,8 @@
         bench-nearest-neighbor
         bench-find-min
         bench-insert
-        bench-delete))))
+        bench-delete
+        bench-interval-search))))
 
 
 
@@ -112,5 +131,7 @@
    (bench-delete :clojure)
 
    (bench-all :clojure)
+
+   (bench-interval-search :clojure)
 
    )
