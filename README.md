@@ -12,7 +12,7 @@ For more detail, refer to [Wikipedia on Kd-trees](http://en.wikipedia.org/wiki/K
 
 Add this to your project.clj `:dependencies` list:
 
-    [clj-kdtree "1.1.2"]
+    [clj-kdtree "1.2.0]
 
 #### Build
 ```clojure

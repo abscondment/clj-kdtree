@@ -1,4 +1,4 @@
-(defproject clj-kdtree "1.1.2"
+(defproject clj-kdtree "1.2.0"
   :description "kd-trees for Clojure"
   :url "https://github.com/abscondment/clj-kdtree"
   :license {:name "The MIT License"
