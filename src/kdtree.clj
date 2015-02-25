@@ -193,7 +193,7 @@ bigger than n elements."
                ^doubles v (:value tree)
                dim-dist (double (- (aget point dimension)
                                    (aget v dimension)))
-               closest-semiplane ((if (> dim-dist 0.0) :right :left) tree)
+               closest-semiplane ((if (>= dim-dist 0.0) :right :left) tree)
                farthest-semiplane ((if (> dim-dist 0.0) :left :right) tree)
                ;; Compute best list for the near-side of the search order
                best-with-cur (insert-sorted! best (Result. v
