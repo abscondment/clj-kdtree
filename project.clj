@@ -4,9 +4,9 @@
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"
             :distribution :repo}
-  :dependencies [[org.clojure/clojure "[1.2.0,1.5.0]"]]
+  :dependencies [[org.clojure/clojure "1.6.0"]]
   :profiles {:dev {:dependencies [[criterium "0.4.1"]
                                   [net.sf/javaml "0.1.7"]]
-                   :repositories [["javaml" {:url "http://corp.array.ca/nest-web/maven/"
+                   :repositories [["javaml" {:url "http://corp.array.ca/nest-web/mavenrepo/"
                                              :checksum :warn}]]}}
   :plugins [[lein-swank "1.4.4"]])

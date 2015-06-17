@@ -7,7 +7,6 @@
   (delete [this point])
   (nearest-neighbor [this point n])
   (insert [this point])
-  (delete [this point])
   (find-min [this dimension])
   (interval-search [this interval]))
 
