@@ -108,7 +108,7 @@ Meta: {:value Hello}
 
 ## License
 
-Copyright (C) 2009-2013 Brendan Ribera [and contributors](https://github.com/abscondment/clj-kdtree/graphs/contributors). All rights reserved.
+Copyright (C) 2009-2015 Brendan Ribera [and contributors](https://github.com/abscondment/clj-kdtree/graphs/contributors). All rights reserved.
 
 Distributed under the MIT License; see the file LICENSE at the root of
 this distribution.
