@@ -7,8 +7,9 @@
 (defrecord Result [point ^double dist-squared])
 
 
-(defn- dist-squared [^doubles a ^doubles b]
+(defn- dist-squared
   "Compute the K-dimensional distance between two points"
+  [^doubles a ^doubles b]
   (loop [res (double 0.0)
          ind (long 0)]
     (if (== ind (alength a))
